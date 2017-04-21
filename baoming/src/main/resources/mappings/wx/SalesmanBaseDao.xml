@@ -1,0 +1,571 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.SalesmanBaseDao">
+	
+    <sql id="salesManBaseColumns">
+    	s.idNum,
+    	s.realName,
+    	s.jobNum,
+    	s.province,
+    	s.city,
+    	s.organization
+    </sql>
+    
+   
+	<!-- 根据省份证 姓名 工号查询营销员 -->
+	<select id="getByIdNumAndNameAndJobNum" resultType="com.thinkgem.jeesite.wx.entity.SalesmanBase">
+		SELECT
+			<include refid="salesManBaseColumns"/>
+		FROM nci_salesman_base s
+		WHERE 
+		 s.realName = #{realName} 
+		and s.jobNum = #{jobNum}
+	</select>
+	
+	<!-- 获取省市 -->
+    <select id="getProvinces" resultType="java.util.Map">
+       SELECT  province,
+       GROUP_CONCAT(distinct city  order by city desc) cities 
+       from nci_salesman_base 
+       GROUP BY province
+    </select>
+    
+    <!-- 获取市县 -->
+    <select id="getCities" resultType="java.util.Map">
+      SELECT  city,
+      GROUP_CONCAT(distinct organization  order by organization desc) organizations 
+      from nci_salesman_base 
+      GROUP BY city
+    </select>
+    
+        <!-- 省 -->
+    <select id="getProvinceSalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.ProvinceSalesman">
+    	SELECT (@rowNum:=@rowNum+1) as rowNo,temp.* 
+    		from(
+			SELECT b.province,COUNT(b.idNum)salesmanBaseCount,
+			(select COUNT(s.idNum) salesmanCount 
+                 FROM v_salesman s
+                 where s.province=b.province
+			) salesmanCount,
+			(select IFNULL(SUM(s.votes),0) votes 
+                 FROM v_salesman s
+                 where s.province=b.province
+			) votes,
+			(select COUNT(s.idNum) salesmanCount 
+                 FROM v_salesman s
+                 where s.province=b.province and s.votes>0
+			)voteSalesmanCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where u.province=b.province 
+             ) userCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where u.province=b.province and u.type=0
+            ) user0Count,
+			(SELECT count(DISTINCT v.salesManId) voteSalesmanCount0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+				and v.province=b.province
+			) timeVoteSalesmanCount,
+			(SELECT IFNULL(sum(v.votes),0) votes0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+				and v.province=b.province
+			) timeVotes,
+			(SELECT count(DISTINCT vl.userId) countUser
+				 from nci_votelog_v vl 
+				 where 
+				  <![CDATA[
+                 vl.createTime >= #{beginDate}
+                 AND vl.createTime <= #{endDate}
+                 ]]>
+                 
+				and vl.province=b.province
+			) timeUserCount
+			FROM nci_salesman_base b 
+			GROUP BY b.province
+			)temp,(Select (@rowNum :=0) ) r 
+			order by  TRUNCATE(temp.timeVotes/temp.salesmanBaseCount,6) desc
+    </select>
+    
+        <!-- 省汇总 -->
+    <select id="getSumProvinceSalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.ProvinceSalesman">
+		SELECT "汇总" as province,COUNT(b.idNum)salesmanBaseCount,
+			(select COUNT(s.idNum) salesmanCount 
+				 FROM v_salesman s
+			) salesmanCount,
+			(select IFNULL(SUM(s.votes),0) votes 
+				 FROM v_salesman s
+			) votes,
+			(select COUNT(s.idNum) salesmanCount 
+				 FROM v_salesman s
+				 where s.votes>0
+			)voteSalesmanCount,
+			(SELECT count(u.id) userCount 
+				from nci_user_v u
+			) userCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where  u.type=0
+			) user0Count,
+			(SELECT count(DISTINCT v.salesManId) voteSalesmanCount0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+			) timeVoteSalesmanCount,
+			(SELECT IFNULL(sum(v.votes),0) votes0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+			) timeVotes,
+			(SELECT count(DISTINCT vl.userId) countUser
+				 from nci_votelog_v vl 
+				 where 
+				  <![CDATA[
+                 vl.createTime >= #{beginDate}
+                 AND vl.createTime <= #{endDate}
+                 ]]>
+			) timeUserCount
+			FROM nci_salesman_base b
+    </select>
+           <!-- 市 -->
+    <select id="getCitySalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.CitySalesman">
+    	SELECT (@rowNum:=@rowNum+1) as rowNo,temp.* 
+    		from(
+			SELECT GROUP_CONCAT(DISTINCT b.province) province,b.city,COUNT(b.idNum)salesmanBaseCount,
+			(select COUNT(s.idNum) salesmanCount 
+                 FROM v_salesman s
+                 where s.city=b.city
+			) salesmanCount,
+			(select IFNULL(SUM(s.votes),0) votes 
+                 FROM v_salesman s
+                 where s.city=b.city
+			) votes,
+			(select COUNT(s.idNum) salesmanCount 
+                 FROM v_salesman s
+                 where s.city=b.city and s.votes>0
+			)voteSalesmanCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where   u.province=b.province and u.city=b.city 
+             ) userCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where u.province=b.province and u.city=b.city and u.type=0
+            ) user0Count,
+			(SELECT count(DISTINCT v.salesManId) voteSalesmanCount0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+                 and v.province=b.province
+				and v.city=b.city
+			) timeVoteSalesmanCount,
+			(SELECT IFNULL(sum(v.votes),0) votes0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+                 and v.province=b.province
+				and v.city=b.city
+			) timeVotes,
+			(SELECT count(DISTINCT vl.userId) countUser
+				 from nci_votelog_v vl 
+				 where 
+				  <![CDATA[
+                 vl.createTime >= #{beginDate}
+                 AND vl.createTime <= #{endDate}
+                 ]]>
+                  and vl.province=b.province
+				and vl.city=b.city
+			) timeUserCount
+			FROM nci_salesman_base b 
+			<if test="province != null and province != ''">
+			where b.province = #{province}
+			</if>
+			GROUP BY b.city
+			)temp,(Select (@rowNum :=0) ) r 
+			order by  TRUNCATE(temp.timeVotes/temp.salesmanBaseCount,6) desc
+    </select>
+    
+        <!-- 市汇总 -->
+    <select id="getSumCitySalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.CitySalesman">
+		SELECT "汇总" as province,COUNT(b.idNum)salesmanBaseCount,
+			(select COUNT(s.idNum) salesmanCount 
+				 FROM v_salesman s
+				 where 1 = 1
+				 <if test="province != null and province != ''">
+							 	and s.province = #{province}
+				</if>
+			) salesmanCount,
+			(select IFNULL(SUM(s.votes),0) votes 
+				 FROM v_salesman s
+				where 1 = 1
+				 <if test="province != null and province != ''">
+							 	and s.province = #{province}
+				</if>
+			) votes,
+			(select COUNT(s.idNum) salesmanCount 
+				 FROM v_salesman s
+				 where s.votes>0
+				 <if test="province != null and province != ''">
+							 	and s.province = #{province}
+				</if>
+			)voteSalesmanCount,
+			(SELECT count(u.id) userCount 
+				from nci_user_v u 
+				where 1 = 1
+				 <if test="province != null and province != ''">
+							 	and u.province = #{province}
+				</if>
+			) userCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where  u.type=0
+				 <if test="province != null and province != ''">
+							 	and u.province = #{province}
+				</if>
+			) user0Count,
+			(SELECT count(DISTINCT v.salesManId) voteSalesmanCount0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+				  <if test="province != null and province != ''">
+							 	and v.province = #{province}
+				</if>
+			) timeVoteSalesmanCount,
+			(SELECT IFNULL(sum(v.votes),0) votes0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+				 <if test="province != null and province != ''">
+							 	and v.province = #{province}
+				</if>
+			) timeVotes,
+			(SELECT count(DISTINCT vl.userId) countUser
+				 from nci_votelog_v vl 
+				 where 
+				  <![CDATA[
+                 vl.createTime >= #{beginDate}
+                 AND vl.createTime <= #{endDate}
+                 ]]>
+				  <if test="province != null and province != ''">
+							 	and vl.province = #{province}
+				</if>
+			) timeUserCount
+			FROM nci_salesman_base b
+			<if test="province != null and province != ''">
+			where b.province = #{province}
+			</if>
+    </select>
+    
+             <!-- 四级机构 -->
+    <select id="getOrganizationSalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.OrganizationSalesman">
+    	SELECT (@rowNum:=@rowNum+1) as rowNo,temp.* 
+    		from(
+			SELECT GROUP_CONCAT(DISTINCT b.province) province,GROUP_CONCAT(DISTINCT b.city) city,b.organization,COUNT(b.idNum)salesmanBaseCount,
+			(select COUNT(s.idNum) salesmanCount 
+                 FROM v_salesman s
+                 where s.organization=b.organization
+			) salesmanCount,
+			(select IFNULL(SUM(s.votes),0) votes 
+                 FROM v_salesman s
+                 where s.organization=b.organization
+			) votes,
+			(select COUNT(s.idNum) salesmanCount 
+                 FROM v_salesman s
+                 where s.organization=b.organization and s.votes>0
+			)voteSalesmanCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where u.province=b.province and u.city=b.city and u.organization=b.organization 
+             ) userCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where u.province=b.province and u.city=b.city and u.organization=b.organization and u.type=0
+            ) user0Count,
+			(SELECT count(DISTINCT v.salesManId) voteSalesmanCount0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+                 and v.province=b.province
+                 and v.city=b.city
+				and v.organization=b.organization
+			) timeVoteSalesmanCount,
+			(SELECT IFNULL(sum(v.votes),0) votes0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+                  and v.province=b.province
+                 and v.city=b.city
+				and v.organization=b.organization
+			) timeVotes,
+			(SELECT count(DISTINCT vl.userId) countUser
+				 from nci_votelog_v vl 
+				 where 
+				  <![CDATA[
+                 vl.createTime >= #{beginDate}
+                 AND vl.createTime <= #{endDate}
+                 ]]>
+                 and vl.province=b.province
+                 and vl.city=b.city
+				and vl.organization=b.organization
+			) timeUserCount
+			FROM nci_salesman_base b 
+			<if test="province != null and province != ''">
+			where b.province = #{province}
+			<if test="city != null and city != ''">
+	        and b.city = #{city}
+	        </if>
+			</if>
+			GROUP BY b.organization
+			)temp,(Select (@rowNum :=0) ) r 
+			order by  TRUNCATE(temp.timeVotes/temp.salesmanBaseCount,6) desc
+    </select>
+    
+    
+           <!-- 四级机构汇总 -->
+    <select id="getSumOrganizationSalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.OrganizationSalesman">
+		SELECT "汇总" as province,COUNT(b.idNum)salesmanBaseCount,
+			(select COUNT(s.idNum) salesmanCount 
+				 FROM v_salesman s
+				 where 1 = 1
+				 <if test="province != null and province != ''">
+							 	and s.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and s.city = #{city}
+	        					</if>
+				</if>
+			) salesmanCount,
+			(select IFNULL(SUM(s.votes),0) votes 
+				 FROM v_salesman s
+				where 1 = 1
+				 <if test="province != null and province != ''">
+							 	and s.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and s.city = #{city}
+	        					</if>
+				</if>
+			) votes,
+			(select COUNT(s.idNum) salesmanCount 
+				 FROM v_salesman s
+				 where s.votes>0
+				 <if test="province != null and province != ''">
+							 	and s.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and s.city = #{city}
+	        					</if>
+				</if>
+			)voteSalesmanCount,
+			(SELECT count(u.id) userCount 
+				from nci_user_v u 
+				where 1 = 1
+				 <if test="province != null and province != ''">
+							 	and u.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and u.city = #{city}
+	        					</if>
+				</if>
+			) userCount,
+			(SELECT count(u.id) userCount 
+                from nci_user_v u 
+                where  u.type=0
+				 <if test="province != null and province != ''">
+							 	and u.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and u.city = #{city}
+	        					</if>
+				</if>
+			) user0Count,
+			(SELECT count(DISTINCT v.salesManId) voteSalesmanCount0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+				  <if test="province != null and province != ''">
+							 	and v.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and v.city = #{city}
+	        					</if>
+				</if>
+			) timeVoteSalesmanCount,
+			(SELECT IFNULL(sum(v.votes),0) votes0
+				 from nci_vote_v v 
+				 where 
+				  <![CDATA[
+                 v.createDate >= #{beginDate}
+                 AND v.createDate <= #{endDate}
+                 ]]>
+				 <if test="province != null and province != ''">
+							 	and v.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and v.city = #{city}
+	        					</if>
+				</if>
+			) timeVotes,
+			(SELECT count(DISTINCT vl.userId) countUser
+				 from nci_votelog_v vl 
+				 where 
+				  <![CDATA[
+                 vl.createTime >= #{beginDate}
+                 AND vl.createTime <= #{endDate}
+                 ]]>
+				  <if test="province != null and province != ''">
+							 	and vl.province = #{province}
+							 	<if test="city != null and city != ''">
+	        					and vl.city = #{city}
+	        					</if>
+				</if>
+			) timeUserCount
+			FROM nci_salesman_base b
+			<if test="province != null and province != ''">
+			where b.province = #{province}
+			<if test="city != null and city != ''">
+	        and b.city = #{city}
+	        </if>
+			</if>
+    </select>
+    
+    
+    
+    
+    
+    
+    
+               <!--  机构参与数 -->
+    <select id="getOrganizationSalesmanCountList" resultType="com.thinkgem.jeesite.wx.entity.excel.health.OrganizationSalesman">
+        
+        SELECT
+        GROUP_CONCAT(DISTINCT b.province) province,
+        GROUP_CONCAT(DISTINCT b.city) city,
+        b.organization,
+        GROUP_CONCAT(DISTINCT b.provinceCode) provinceCode,
+        GROUP_CONCAT(DISTINCT b.cityCode) cityCode,
+        GROUP_CONCAT(DISTINCT b.organizationCode) organizationCode,
+        COUNT(s.id) count
+    FROM
+        nci_salesman_base b,
+        nci_salesman s
+    WHERE
+        b.jobNum = s.idNum 
+            <if test="province != null and province != ''">
+            and b.province = #{province}
+            <if test="city != null and city != ''">
+            and b.city = #{city}
+            <if test="organization != null and organization != ''">
+            and b.organization = #{organization}
+            </if>
+            </if>
+            </if>
+    GROUP BY
+        b.organization
+    ORDER BY
+        count DESC
+    </select>
+    
+    
+                  <!--   营销员列表 -->
+    <select id="getSalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.health.Salesman">
+	SELECT
+	b.qudao,
+	b.province,
+	b.city,
+	b.organization,
+	b.provinceCode,
+	b.cityCode,
+	b.organizationCode,
+	b.realName,
+	b.jobNum,
+	CONCAT(LEFT(s.phone,4),"****",RIGHT(s.phone,3)) as phone,
+	(SELECT COUNT(u.id) from nci_user u where u.salesManId = s.id ) allUserCount,
+	(SELECT COUNT(u.id) from nci_user u where u.salesManId = s.id and u.phone is not null) userCount
+	FROM
+        nci_salesman_base b,
+        nci_salesman s
+    WHERE
+        b.jobNum = s.idNum 
+            <if test="province != null and province != ''">
+            and b.province = #{province}
+            <if test="city != null and city != ''">
+            and b.city = #{city}
+            <if test="organization != null and organization != ''">
+            and b.organization = #{organization}
+            </if>
+            </if>
+            </if>
+         <if test="qudao != null and qudao != ''">
+            and b.qudao = #{qudao}
+            </if>    
+    ORDER BY userCount DESC
+    </select>
+    
+	
+	                <!--   客户列表-->
+    <select id="getUserList" resultType="com.thinkgem.jeesite.wx.entity.excel.health.User">
+        SELECT
+		    u.realName,
+		    u.phone,
+		    u.sex,
+		    u.age,
+		    sc.score,
+		    u.createTime,
+		    s.realName AS salesMan,
+		    s.province,
+		    s.city,
+		    s.organization,
+		    s.provinceCode,
+		    s.cityCode,
+		    s.organizationCode
+	    FROM
+	        nci_user u,
+	        v_salesman s,
+	        nci_score sc
+	    WHERE
+	        u.salesManId = s.id
+	        AND u.phone IS NOT NULL
+	        AND u.id = sc.userId
+	            <if test="province != null and province != ''">
+	            and s.province = #{province}
+	            <if test="city != null and city != ''">
+	            and s.city = #{city}
+	            <if test="organization != null and organization != ''">
+	            and s.organization = #{organization}
+	            </if>
+	            </if>
+	            </if>
+    </select>
+    
+</mapper>

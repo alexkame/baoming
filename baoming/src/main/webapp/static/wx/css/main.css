@@ -1,0 +1,88 @@
+.box img { width: 100%}
+.bg { background: url("../images/bg.jpg") 0 0 repeat; background-size: 100% 100%}
+.footer { position: fixed; bottom: 0; width: 100%;z-index: 2;}
+.w100{ width: 100%}
+.pos { position: fixed; top: 0; z-index: 1}
+
+.btn-wrap { position: absolute; bottom: 3rem; width: 100%; text-align: center; z-index: 3}
+.btn-wrap a {}
+.btn-wrap a img { width: 40%; margin: 0 .5rem}
+
+.pop { display: none; position: absolute; left: 50%; top: 50%; margin: -15rem 0 0 -15rem; width: 30rem; height: 30rem; z-index: 5}
+.pop img { width: 100%}
+.pop-bg { display: none; position:fixed; left: 0; top:0; width: 100%; height: 100%; background: rgba(0,0,0,.5);z-index: 4}
+
+.info { position: absolute; left: 0; top:0; width: 100%; z-index: 3; text-align: center; overflow: hidden;}
+.info-title { width: 50%; margin: 1rem 0}
+.table { border-collapse: collapse; width: 100%}
+.table td {color: #fff; padding: 1rem 0; border-bottom: 1px solid #275874; font-size: 1.1rem}
+.table thead td {background: #275874;;}
+.table tbody td {}
+.formDiv li { margin-top: 1rem}
+.formDiv li em {}
+.formDiv li em img{ width: 25%; margin: .5rem 1rem 0 0}
+.formDiv li input { background: url("../images/input-bg.png") 0 0 no-repeat; background-size: 100% 100%;  line-height: .5rem; width: 50%; font-size: 1.2rem; padding: .5rem 0 1.5rem 0; text-align: center}
+
+.drop { display: none; position: absolute; left: 50%; top: 50%; border: .2rem solid #000; background: #fff; width: 80%; margin-left:-40%; border-radius: .5rem; z-index: 5;}
+.sub { display: block; text-align: center; margin: 1rem 0}
+.sub img { width: 60%}
+/*个性化复选框 */
+/*个性化复选框 */
+.radio-box { float: left; width: 2.8rem; height: 2.8rem; position: relative; margin-right: 1rem}
+.radio-box label { width: 2.8rem; height: 2.8rem; cursor: pointer; position: absolute; left: 0; top: 0; background:#fff; border:.2rem solid #004196; border-radius:1.6rem;}
+.radio-box label:after {
+    content: '';
+    width: 0.9rem;
+    height: 0.5rem;
+    position: absolute;
+    top: 0.8rem;
+    left: 0.8rem;
+    border: 0.3rem solid #004196;
+    border-top: none;
+    border-right: none;
+    background: transparent;
+    filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+    opacity: 0;
+    -moz-transform: rotate(-45deg);
+    -ms-transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+}
+.radio-box input[type=radio] { visibility: hidden;}
+.radio-box input[type=radio]:checked + label:after { filter: progid:DXImageTransform.Microsoft.Alpha(enabled=false); opacity: 1;}
+
+
+.city-list { position: relative; min-height: 3.2rem; overflow: hidden}
+.city-list img.aa{ height: 1.8rem; margin-top: .5rem}
+.city-list img.bb{ height: 1.8rem; margin: -1.8rem 0 0 1.8rem}
+
+.m20 { margin:1rem 0 0 .5rem; width: 2rem; height: 2rem; position: relative;}
+.m20 label { width: 2rem; height:2rem; border-radius:1.2rem;}
+.m20 label:after {
+    width: 0.9rem;
+    height: 0.5rem;
+    top: 0.5rem;
+    left: 0.5rem;
+}
+.line { height: 1rem}
+.bg-or { background: #ffc200; margin: 0 0 0 4rem; border-radius: .5rem}
+.canals-box li{ font-size: 1.2rem; padding: 1rem 0 1rem 1rem; border-bottom: .1rem solid #eee;}
+.canals-box li:last-child {border-bottom: 0}
+
+.city-box { height: 30rem; overflow: auto}
+.city-box li{ font-size: 1.2rem; padding: 1rem 0 1rem 1rem; border-bottom: .1rem solid #eee;}
+.city-box li:last-child {border-bottom: 0}
+
+.box-bg {position: fixed; left: 50%; top: 50%; width: 26rem; margin: -11.45rem 0 0 -13rem;height: 22.9rem; z-index: 9;}
+.box {  background: url("../images/suss-bg.png") 0 0 no-repeat; background-size: 100% 100%;}
+.more { background: url("../images/more.png") 0 0 no-repeat; background-size: 100% 100%;}
+.box-bg p {
+    border-radius:1rem; padding: 10px; background: #2471a8; margin: 14.4rem 3rem 0 3rem; font-size: 1.2rem; color: #fff;
+    -moz-box-shadow:.2rem .2rem .2rem rgba(0,0,0,.5) inset; -webkit-box-shadow:.2rem .2rem .2rem rgba(0,0,0,.5) inset; box-shadow:.2rem .2rem .2rem rgba(0,0,0,.5) inset;
+    -moz-text-shadow:.2rem .2rem .2rem rgba(0,0,0,.5); -webkit-text-shadow:.2rem .2rem .2rem rgba(0,0,0,.5); text-shadow:.2rem .2rem .2rem rgba(0,0,0,.5);
+
+}
+
+
+
+.close { float: right; display: inline-block; background: url("../images/close-btn.png") 0 0 no-repeat; width: 2.5rem; height: 2.5rem; background-size: 2.5rem; margin: 1rem 0 0 0}

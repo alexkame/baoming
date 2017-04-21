@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.PrizeDao">
+	
+    <sql id="prizeColumns">
+    	s.id,
+    	s.type,
+    	s.num,
+    	s.putOutNum,
+    	s.createDate,
+    	s.createTime
+    </sql>
+	
+	<!-- 查询当前可用的奖池 -->
+    <select id="getTopUse" resultType="com.thinkgem.jeesite.wx.entity.Prize">
+        SELECT
+            <include refid="prizeColumns"/>
+        FROM nci_prize s
+        where createDate = CURDATE()
+        <![CDATA[
+        and createTime <= CURRENT_TIME()
+        and num >putOutNum
+        ]]>
+        LIMIT 1
+    </select>
+    
+    <!-- 查询当前可用的奖池 -->
+    <select id="getById" resultType="com.thinkgem.jeesite.wx.entity.Prize">
+        SELECT
+            <include refid="prizeColumns"/>
+        FROM nci_prize s
+        where id = #{id}
+        <if test="lock">
+			for update
+		</if>
+    </select>
+   
+     <!-- 增加发放数量-->
+    <update id="addPutOutNum">
+        UPDATE nci_prize SET 
+            putOutNum = putOutNum+#{putOutNum}
+        WHERE id = #{id}
+    </update>
+    
+</mapper>

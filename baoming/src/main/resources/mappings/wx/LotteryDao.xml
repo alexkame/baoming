@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.LotteryDao">
+	
+    <sql id="lotteryColumns">
+    	s.id,
+    	s.userId,
+    	s.type,
+    	s.num,
+    	s.status,
+    	s.remark,
+    	s.flowCode,
+    	s.createTime,
+    	u.id  AS "user.id", 
+    	u.realName  AS "user.realName", 
+    	u.phone  AS "user.phone"
+    </sql>
+    
+    <!-- 获取用户奖品-->
+    <select id="get" resultType="com.thinkgem.jeesite.wx.entity.Lottery">
+        SELECT
+        s.id,
+        s.userId,
+        s.type,
+        s.num,
+        s.status,
+        s.remark,
+        s.flowCode,
+        s.createTime
+        FROM nci_lottery s
+        WHERE s.id = #{id} 
+    </select>
+    
+     <!-- 获取用户奖品-->
+    <select id="getById" resultType="com.thinkgem.jeesite.wx.entity.Lottery">
+        SELECT
+        s.id,
+        s.userId,
+        s.type,
+        s.num,
+        s.status,
+        s.remark,
+        s.flowCode,
+        s.createTime
+        FROM nci_lottery s
+        WHERE s.id = #{id} 
+         <if test="lock">
+            for update
+        </if>
+    </select>
+   
+	
+	<!-- 查询中奖前1000名用户 -->
+    <select id="getOrderByType" resultType="com.thinkgem.jeesite.wx.entity.Lottery">
+        SELECT
+            <include refid="lotteryColumns"/>
+        FROM nci_lottery s,nci_user u
+        where s.userId = u.id
+        order by s.type desc,s.createTime desc
+        limit 1000
+    </select>
+    
+	<!-- 查询中奖 -->
+    <select id="getSumByUserId" resultType="com.thinkgem.jeesite.wx.entity.Lottery">
+        SELECT
+        s.type,
+        sum(s.num) AS "num"
+        FROM nci_lottery s
+        where s.userId = #{userId} 
+        GROUP BY s.type
+        order by s.type desc
+    </select>
+   <!-- 查询用户中iwatch的次数 -->
+    <select id="getIwatchCountByUserId" resultType="long">
+        SELECT
+            COUNT(id)
+        FROM nci_lottery
+        WHERE type = 3
+        and userId = #{userId}
+        <if test="lock">
+            for update
+        </if>
+    </select>
+    
+    <!-- 查询用户未领取的流量包奖品 -->
+    <select id="getNoLiuliangByUserId" resultType="com.thinkgem.jeesite.wx.entity.Lottery">
+        SELECT
+        s.id,
+        s.userId,
+        s.type,
+        s.num,
+        s.status,
+        s.remark,
+        s.flowCode,
+        s.createTime
+        FROM nci_lottery s
+        WHERE s.type = 2 
+        and (s.status = 0 or s.status = 2)
+        and s.userId = #{userId}
+        limit 1
+    </select>
+    <!-- 添加 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO nci_lottery(
+        userId,
+        type,
+        num,
+        status,
+        flowCode,
+        createTime,
+        updateTime
+        ) VALUES (
+            #{userId}, 
+            #{type}, 
+            #{num}, 
+            #{status}, 
+            #{flowCode}, 
+            #{createTime},
+            now()
+        )
+    </insert>
+    
+     <!-- 更新 状态-->
+    <update id="updateStatus">
+        UPDATE nci_lottery SET 
+            status = #{status},
+            updateTime = now()
+	         <if test="remark != null">
+	        , remark = #{remark}
+	        </if>
+        WHERE id = #{id}
+    </update>
+    
+</mapper>

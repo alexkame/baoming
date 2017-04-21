@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.ScoreDao">
+	
+    <sql id="voteLogColumns">
+    	s.userId,
+    	s.type,
+    	s.score,
+    	s.createTime
+    </sql>
+   
+	<select id="getByUserIdAndType" resultType="com.thinkgem.jeesite.wx.entity.Score">
+		SELECT
+			<include refid="voteLogColumns"/>
+		FROM nci_score s
+		WHERE s.userId = #{userId}
+		and s.type =  #{type}
+	</select>
+	
+	<select id="getBySalmesManId" resultType="com.thinkgem.jeesite.wx.entity.Score">
+		SELECT
+		s.userId,
+    	s.type,
+    	s.score,
+    	s.createTime,
+    	user.sex as "user.sex",
+    	user.age as "user.age",
+    	user.phone as "user.phone",
+    	user.realName as "user.realName"
+		FROM nci_score s,nci_user user
+		WHERE s.userId = user.id
+		and user.salesManId =  #{salesManId}
+		and user.phone is not null
+		<if test="name != null and name != ''">
+		 <![CDATA[
+          and user.realName like CONCAT('%',#{name},'%')  
+                ]]>
+        
+        </if>
+	</select>
+    
+    <insert id="insert">
+        INSERT INTO nci_score(
+            userId,
+            type,
+            score,
+            createTime
+        ) VALUES (
+            #{userId}, 
+            #{type}, 
+            #{score}, 
+            #{createTime}
+        )
+    </insert>
+    
+      <!-- 更新 -->
+    <update id="updateScore">
+        UPDATE nci_score SET 
+            score = #{score}, 
+            question = #{question}, 
+            createTime = now()
+       WHERE userId = #{userId}
+		and  type =  #{type}
+    </update>
+    
+</mapper>

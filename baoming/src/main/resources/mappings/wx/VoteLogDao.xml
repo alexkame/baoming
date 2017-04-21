@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.VoteLogDao">
+	
+    <sql id="voteLogColumns">
+    	s.id,
+    	s.userId,
+    	s.salesManId,
+    	s.repeatUserId,
+    	s.createTime
+    </sql>
+   
+	<!-- 获取今天投票记录 -->
+	<select id="getTodayByUserId" resultType="com.thinkgem.jeesite.wx.entity.VoteLog">
+		SELECT
+			<include refid="voteLogColumns"/>
+		FROM nci_votelog_day s
+		WHERE s.userId = #{userId}
+		<![CDATA[
+		and s.createTime < date_add(current_date, interval 1 day)
+		and s.createTime >= current_date
+		]]>
+		<if test="lock">
+            for update
+        </if>
+	</select>
+	
+	<!-- 获取今天投票记录 -->
+    <select id="getTodaysByUserId" resultType="com.thinkgem.jeesite.wx.entity.VoteLog">
+        SELECT
+            <include refid="voteLogColumns"/>
+        FROM nci_votelog_day s
+        WHERE s.userId = #{userId}
+        <![CDATA[
+        and s.createTime < date_add(current_date, interval 1 day)
+        and s.createTime >= current_date
+        ]]>
+    </select>
+    
+	<!-- 添加投票日志 -->
+    <insert id="insert">
+        INSERT INTO nci_votelog_day(
+            userId,
+            salesManId,
+            repeatUserId,
+            createTime
+        ) VALUES (
+            #{userId}, 
+            #{salesManId}, 
+            #{repeatUserId}, 
+            #{createTime}
+        )
+    </insert>
+    
+</mapper>

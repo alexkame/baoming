@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.SalesmanDao">
+	
+    <sql id="salesManColumns">
+    	s.id,
+    	s.idNum,
+    	s.phone,
+    	s.photo,
+    	s.openid,
+    	s.votes,
+    	s.filiale,
+    	s.channel,
+    	s.name,
+    	s.createTime
+    </sql>
+    
+   
+	<!-- 根据微信openid查询营销员 -->
+	<select id="getWithBaseByOpenid" resultType="com.thinkgem.jeesite.wx.entity.Salesman">
+		SELECT
+			<include refid="salesManColumns"/>
+		FROM nci_salesman s
+		WHERE s.openid = #{openid}
+	</select>
+	
+	<!-- 根据省份证查询营销员 -->
+	<select id="getWithBaseByIdNum" resultType="com.thinkgem.jeesite.wx.entity.Salesman">
+		SELECT
+			<include refid="salesManColumns"/>
+		FROM nci_salesman s
+		WHERE s.idNum = #{idNum}
+	</select>
+	
+	   <!-- 根据工号查询营销员 -->
+    <select id="getWithBaseByJobNum" resultType="com.thinkgem.jeesite.wx.entity.Salesman">
+        SELECT
+            <include refid="salesManColumns"/>
+        FROM nci_salesman s
+        WHERE b.jobNum = #{jobNum}
+    </select>
+    
+	<!-- 查询得票数前2016名营销员 -->
+    <select id="getWithBaseOrderByVotes" resultType="com.thinkgem.jeesite.wx.entity.Salesman">
+        SELECT
+        s.id,
+    	s.idNum,
+    	s.phone,
+    	s.openid,
+    	s.votes,
+    	s.createTime
+        order by votes desc
+        limit 2016
+    </select>
+    
+	<!-- 根据id查询营销员 -->
+	<select id="getWithBaseById" resultType="com.thinkgem.jeesite.wx.entity.Salesman">
+		SELECT
+			<include refid="salesManColumns"/>
+		FROM nci_salesman s
+		WHERE  s.id = #{id}
+	</select>
+	
+	<!-- 根据省份证查询营销员-->
+	<select id="getByIdNum" resultType="com.thinkgem.jeesite.wx.entity.Salesman">
+	   SELECT
+       s.id,
+       s.idNum,
+       s.phone,
+       s.photo,
+       s.openid,
+       s.votes,
+       s.createTime 
+       FROM nci_salesman s 
+       WHERE s.idNum = #{idNum}
+		<if test="lock">
+			for update
+		</if>
+	</select>
+	   <!-- 查询大于某票数的人数 -->
+    <select id="getCountByVote" resultType="long">
+        SELECT
+            COUNT(id)
+        FROM nci_salesman
+        WHERE votes > #{vote}
+    </select>
+    
+           <!-- 查询得票数 -->
+    <select id="getVotes" resultType="long">
+        SELECT
+           votes
+        FROM nci_salesman
+        WHERE id = #{id}
+    </select>
+    
+        <!-- 营销员清单总数 -->
+    <select id="getSalesmanListCount" resultType="long">
+          SELECT
+            count(s.id) count
+        FROM nci_salesman_base b, nci_salesman s
+        WHERE b.jobNum = s.idNum
+        <if test="province != null and province != ''">
+        and b.province = #{province}
+        </if>
+        <if test="city != null and city != ''">
+        and b.city = #{city}
+        </if>
+        <if test="organization != null and organization != ''">
+        and b.organization = #{organization}
+        </if>
+    </select>
+    
+     <!-- 营销员清单列表 -->
+    <select id="getSalesmanList" resultType="com.thinkgem.jeesite.wx.entity.excel.Salesman">
+		  SELECT  (@rowNum:=@rowNum+1) as rowNo,tem.*
+			from (
+		  SELECT
+		    b.province,
+		    b.city,
+		    b.organization,
+		    b.realName,
+		    b.jobNum,
+		    s.votes,
+		    (SELECT sum(v.votes) FROM  nci_salesman_vote v
+		        WHERE v.salesManId = s.id
+		        <![CDATA[
+                AND v.createDate >= #{beginDate}
+                AND v.createDate <= #{endDate}
+                ]]>
+		    ) timeVotes,
+		    (SELECT count(id) FROM nci_user
+		        WHERE salesManId = s.id
+		    ) userCount,
+		    (SELECT count(id) FROM nci_user
+		        WHERE type = 0
+		        AND salesManId = s.id
+		    ) user0Count
+		FROM nci_salesman_base b, nci_salesman s
+		WHERE b.jobNum = s.idNum
+		<if test="province != null and province != ''">
+		and b.province = #{province}
+		</if>
+		<if test="city != null and city != ''">
+        and b.city = #{city}
+        </if>
+        <if test="organization != null and organization != ''">
+        and b.organization = #{organization}
+        </if>
+		ORDER BY votes DESC
+		<if test="pageSize >0">
+		LIMIT #{fromIndex},#{pageSize}
+		</if>
+		) tem,(Select (@rowNum :=0) ) r
+    </select>
+    
+      <!-- 营销员清单汇总   -->
+    <select id="getSumSalesman" resultType="com.thinkgem.jeesite.wx.entity.excel.Salesman">
+		 SELECT
+		 	"汇总" as province,
+			SUM(temp.votes) votes,
+			SUM(temp.timeVotes) timeVotes,
+			SUM(temp.userCount) userCount,
+			SUM(temp.user0Count) user0Count
+		FROM(
+		SELECT
+			s.votes,
+			(SELECT sum(v.votes)
+				FROM nci_salesman_vote v
+				WHERE v.salesManId = s.id
+				 <![CDATA[
+                AND v.createDate >= #{beginDate}
+                AND v.createDate <= #{endDate}
+                ]]>
+			) timeVotes,
+			(SELECT count(id)
+				FROM nci_user
+				WHERE salesManId = s.id
+			) userCount,
+			(SELECT	count(id)
+				FROM nci_user
+				WHERE type = 0
+				AND salesManId = s.id
+			) user0Count
+		FROM
+			nci_salesman_base b,
+			nci_salesman s
+		WHERE
+			b.jobNum = s.idNum
+			<if test="province != null and province != ''">
+			and b.province = #{province}
+			</if>
+			<if test="city != null and city != ''">
+	        and b.city = #{city}
+	        </if>
+	        <if test="organization != null and organization != ''">
+	        and b.organization = #{organization}
+	        </if>
+		) AS temp
+    </select>
+    
+	<!-- 插入用户 -->
+	<insert id="insert">
+		INSERT INTO nci_salesman(
+			idNum,
+	    	phone,
+	    	photo,
+	    	openid,
+	    	votes,
+	    	filiale,
+            channel,
+            name,
+	    	createTime
+		) VALUES (
+			#{idNum}, 
+			#{phone}, 
+			#{photo}, 
+			#{openid}, 
+			#{votes}, 
+			#{filiale}, 
+			#{channel}, 
+			#{name}, 
+			#{createTime}
+		)
+	</insert>
+	
+	<!-- 更新 -->
+	<update id="update">
+		UPDATE nci_salesman SET 
+			phone = #{phone}, 
+			filiale =#{filiale},
+            channel =#{channel},
+            name =#{name},
+			<if test="photo != null">
+			photo = #{photo}, 
+			</if>
+			openid = #{openid}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 增加投票数 -->
+	<update id="addVotes">
+		UPDATE nci_salesman SET 
+			votes = votes+1 
+		WHERE id = #{id}
+	</update>
+</mapper>

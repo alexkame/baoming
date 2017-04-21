@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.wx.dao.NciUserDao">
+	
+    <sql id="userColumns">
+    	s.id,
+    	s.realName,
+    	s.phone,
+    	s.sex,
+    	s.age,
+    	s.openid,
+    	s.type,
+    	s.salesManId,
+    	s.repeatUserId,
+    	s.createTime,
+    	s.childrenName,
+        s.childrenClass,
+        s.city
+    </sql>
+   
+	<!-- 获取用户-->
+	<select id="get" resultType="com.thinkgem.jeesite.wx.entity.User">
+		SELECT
+			<include refid="userColumns"/>
+		FROM nci_user s
+		WHERE s.id = #{id} 
+	</select>
+	
+	<!-- 获取用户-->
+	<select id="getByPhone" resultType="com.thinkgem.jeesite.wx.entity.User">
+		SELECT
+			<include refid="userColumns"/>
+		FROM nci_user s
+		WHERE s.phone = #{phone} 
+	</select>
+	
+	<!-- 获取用户-->
+    <select id="getByOpenid" resultType="com.thinkgem.jeesite.wx.entity.User">
+        SELECT
+            <include refid="userColumns"/>
+        FROM nci_user s
+        WHERE s.openid = #{openid} 
+        <if test="lock">
+            for update
+        </if>
+    </select>
+	
+	<select id="getBySalmesManId" resultType="com.thinkgem.jeesite.wx.entity.User">
+        SELECT
+        <include refid="userColumns"/>
+        FROM nci_user s
+        WHERE  s.salesManId =  #{salesManId}
+        and s.phone is not null
+        
+    </select>
+    
+	   <!-- 查询大于某新华币人数 -->
+    <select id="getCountByNciMoneny" resultType="long">
+        SELECT
+            COUNT(id)
+        FROM nci_user
+        WHERE nciMoney > #{nciMoney}
+    </select>
+    
+           <!-- 查询大于某新华币人数 -->
+    <select id="getCount" resultType="long">
+        SELECT
+            COUNT(id)
+        FROM nci_user
+    </select>
+    
+	<!-- 添加用户 -->
+    <insert id="insert">
+        INSERT INTO nci_user(
+        realName,
+        phone,
+        sex,
+        age,
+        openid,
+        type,
+        salesManId,
+        repeatUserId,
+        nciMoney,
+        createTime,
+        childrenName,
+        childrenClass,
+        city
+        ) VALUES (
+            #{realName}, 
+            #{phone}, 
+            #{sex}, 
+            #{age}, 
+            #{openid}, 
+            #{type}, 
+            #{salesManId}, 
+            #{repeatUserId}, 
+            #{nciMoney}, 
+            #{createTime},
+            #{childrenName},
+            #{childrenClass},
+            #{city}
+        )
+    </insert>
+    
+    <!-- 增加投票数 -->
+    <update id="addLuckDraw">
+        UPDATE nci_user SET 
+            luckDraw = luckDraw+1 
+        WHERE id = #{userId}
+    </update>
+    
+     <!--  增加使用抽奖次数-->
+    <update id="addUseLuckDraw">
+        UPDATE nci_user SET 
+            useLuckDraw = useLuckDraw+1 
+        WHERE id = #{userId}
+    </update>
+    
+     <!-- 增加新华币 -->
+    <update id="addNciMoney">
+        UPDATE nci_user SET 
+            nciMoney = nciMoney+#{nciMoney}
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 更新 -->
+    <update id="updateNameAndPhone">
+        UPDATE nci_user SET 
+            phone = #{phone}, 
+            realName = #{realName}
+        WHERE id = #{id}
+    </update>
+    
+     <!-- 更新 -->
+    <update id="updateSexAndAge">
+        UPDATE nci_user SET 
+            sex = #{sex}, 
+            age = #{age}
+        WHERE id = #{id}
+    </update>
+    
+     <!-- 更新 -->
+    <update id="updateUserInfo">
+        UPDATE nci_user SET 
+            sex = #{sex}, 
+            childrenName = #{childrenName},
+            childrenClass = #{childrenClass},
+            city = #{city},
+            phone = #{phone}, 
+            realName = #{realName}
+        WHERE id = #{id}
+    </update>
+</mapper>
